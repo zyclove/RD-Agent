@@ -7,7 +7,6 @@ from pathlib import Path
 from jinja2 import Environment, StrictUndefined
 
 from rdagent.core.experiment import Experiment
-from rdagent.core.log import RDAgentLog
 from rdagent.core.prompts import Prompts
 from rdagent.core.proposal import (
     Hypothesis,
@@ -15,11 +14,11 @@ from rdagent.core.proposal import (
     HypothesisFeedback,
     Trace,
 )
+from rdagent.log import rdagent_logger as logger
 from rdagent.oai.llm_utils import APIBackend
 
 feedback_prompts = Prompts(file_path=Path(__file__).parent.parent / "prompts.yaml")
 DIRNAME = Path(__file__).absolute().resolve().parent
-logger = RDAgentLog()
 
 
 class QlibFactorHypothesisExperiment2Feedback(HypothesisExperiment2Feedback):
@@ -77,25 +76,13 @@ class QlibFactorHypothesisExperiment2Feedback(HypothesisExperiment2Feedback):
         reason = response_json.get("Reasoning", "No reasoning provided")
         decision = response_json.get("Replace Best Result", "no").lower() == "yes"
 
-        # Create HypothesisFeedback object
-        hypothesis_feedback = HypothesisFeedback(
+        return HypothesisFeedback(
             observations=observations,
             hypothesis_evaluation=hypothesis_evaluation,
             new_hypothesis=new_hypothesis,
             reason=reason,
             decision=decision,
         )
-
-        logger.info(
-            "Generated Hypothesis Feedback:\n"
-            f"Observations: {observations}\n"
-            f"Feedback for Hypothesis: {hypothesis_evaluation}\n"
-            f"New Hypothesis: {new_hypothesis}\n"
-            f"Reason: {reason}\n"
-            f"Replace Best Result: {'Yes' if decision else 'No'}"
-        )
-
-        return hypothesis_feedback
 
 
 class QlibModelHypothesisExperiment2Feedback(HypothesisExperiment2Feedback):
@@ -107,6 +94,7 @@ class QlibModelHypothesisExperiment2Feedback(HypothesisExperiment2Feedback):
         For example: `mlflow` of Qlib will be included.
         """
 
+        logger.info("Generating feedback...")
         # Define the system prompt for hypothesis feedback
         system_prompt = feedback_prompts["model_feedback_generation"]["system"]
 
@@ -141,5 +129,5 @@ class QlibModelHypothesisExperiment2Feedback(HypothesisExperiment2Feedback):
             hypothesis_evaluation=response_json_hypothesis.get("Feedback for Hypothesis", "No feedback provided"),
             new_hypothesis=response_json_hypothesis.get("New Hypothesis", "No new hypothesis provided"),
             reason=response_json_hypothesis.get("Reasoning", "No reasoning provided"),
-            decision=response_json_hypothesis.get("Decision", "false").lower() == "true",
+            decision=str(response_json_hypothesis.get("Decision", "false")).lower() == "true",
         )

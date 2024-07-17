@@ -15,7 +15,13 @@ from pydantic_settings import BaseSettings
 
 
 class RDAgentSettings(BaseSettings):
+    # TODO: (xiao) I think LLMSetting may be a better name.
     # TODO: (xiao) I think most of the config should be in oai.config
+    # Log configs
+    # TODO: (xiao) think it can be a separate config.
+    log_trace_path: str | None = None
+    log_llm_chat_content: bool = True
+
     use_azure: bool = True
     use_azure_token_provider: bool = False
     managed_identity_client_id: str | None = None
@@ -28,7 +34,6 @@ class RDAgentSettings(BaseSettings):
     prompt_cache_path: str = str(Path.cwd() / "prompt_cache.db")
     session_cache_folder_location: str = str(Path.cwd() / "session_cache_folder/")
     max_past_message_include: int = 10
-    log_llm_chat_content: bool = True
 
     # Chat configs
     chat_openai_api_key: str = ""
@@ -94,6 +99,12 @@ class RDAgentSettings(BaseSettings):
     # factor extraction conf
     max_input_duplicate_factor_group: int = 600
     max_output_duplicate_factor_group: int = 20
+
+    # workspace conf
+    workspace_path: Path = Path.cwd() / "git_ignore_folder" / "RD-Agent_workspace"
+
+    # multi processing conf
+    multi_proc_n: int = 1
 
 
 RD_AGENT_SETTINGS = RDAgentSettings()
